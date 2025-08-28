@@ -1,0 +1,252 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Color Picker & History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f4f6f9;
+            color: #333;
+        }
+
+        header {
+            background: #4CAF50;
+            padding: 15px;
+            text-align: center;
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        #backBtn {
+            position: absolute;
+            left: 20px;
+            top: 12px;
+            background: #ffffff33;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            transition: background 0.2s ease;
+        }
+
+            #backBtn:hover {
+                background: #ffffff55;
+            }
+
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        #imageContainer {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        #uploadedImage {
+            max-width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            cursor: crosshair;
+        }
+
+        #colorInfo {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        h3 {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 20px;
+            color: #444;
+        }
+
+        #clearHistory {
+            display: block;
+            margin: 10px auto 20px auto;
+            padding: 8px 16px;
+            background: #e53935;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+            #clearHistory:hover {
+                background: #c62828;
+            }
+
+        #historyContainer {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .color-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+            .color-card:hover {
+                transform: translateY(-4px);
+            }
+
+        .color-swatch {
+            width: 100%;
+            height: 80px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+        }
+
+        .color-code {
+            margin: 5px 0;
+            font-size: 15px;
+        }
+
+        button {
+            padding: 6px 12px;
+            margin-left: 8px;
+            border: none;
+            border-radius: 6px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s ease;
+        }
+
+            button:hover {
+                background: #388E3C;
+            }
+
+        @media (max-width: 600px) {
+            #colorInfo {
+                font-size: 16px;
+            }
+
+            button {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button id="backBtn" onclick="goBack()">⬅ Back</button>
+        🎨 Color Picker & History
+    </header>
+
+    <div class="container">
+        <div id="imageContainer">
+            <img id="uploadedImage" alt="Uploaded Image">
+            <div id="colorInfo">Click anywhere on the image to pick a color</div>
+        </div>
+
+        <h3>Color History</h3>
+        <button id="clearHistory">🗑️ Clear History</button>
+        <div id="historyContainer"></div>
+    </div>
+
+    <script>
+        // Load uploaded image name from sessionStorage
+        const uploadedImage = document.getElementById("uploadedImage");
+        const fileName = sessionStorage.getItem("uploadedImageName");
+        if (fileName) {
+            uploadedImage.src = "/Uploads/" + fileName;
+        }
+
+        // Save picked color to localStorage
+        function saveColorToHistory(colorHex, colorRgb) {
+            let history = JSON.parse(localStorage.getItem("colorHistory")) || [];
+            history.push({ hex: colorHex, rgb: colorRgb });
+            localStorage.setItem("colorHistory", JSON.stringify(history));
+            renderHistory();
+        }
+
+        // Render history UI
+        function renderHistory() {
+            let history = JSON.parse(localStorage.getItem("colorHistory")) || [];
+            const container = document.getElementById("historyContainer");
+            container.innerHTML = "";
+
+            history.forEach((c) => {
+                const card = document.createElement("div");
+                card.className = "color-card";
+                card.innerHTML = `
+                        <div class="color-swatch" style="background:${c.hex}"></div>
+                        <p class="color-code"><b>HEX:</b> ${c.hex} <button onclick="copyToClipboard('${c.hex}')">Copy</button></p>
+                        <p class="color-code"><b>RGB:</b> ${c.rgb} <button onclick="copyToClipboard('${c.rgb}')">Copy</button></p>
+                    `;
+                container.appendChild(card);
+            });
+        }
+
+        // Copy to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Copied: " + text);
+            });
+        }
+
+        // Handle image click → get color
+        uploadedImage.addEventListener("click", function (event) {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = uploadedImage.width;
+            canvas.height = uploadedImage.height;
+            ctx.drawImage(uploadedImage, 0, 0, uploadedImage.width, uploadedImage.height);
+
+            const rect = uploadedImage.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            const pixel = ctx.getImageData(x, y, 1, 1).data;
+            const rgb = `rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
+            const hex = "#" + ((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1);
+
+            document.getElementById("colorInfo").textContent = `HEX: ${hex} | RGB: ${rgb}`;
+
+            // ✅ Save only in client localStorage
+            saveColorToHistory(hex, rgb);
+        });
+
+        // Clear history
+        document.getElementById("clearHistory").addEventListener("click", () => {
+            if (confirm("Are you sure you want to clear all history?")) {
+                localStorage.removeItem("colorHistory");
+                renderHistory();
+            }
+        });
+
+        // Back button navigation
+        function goBack() {
+            window.location.href = "page1.html"; // 🔄 Replace with actual Page 1 filename
+        }
+
+        // On page load → render history
+        window.onload = renderHistory;
+    </script>
+
+</body>
+</html>

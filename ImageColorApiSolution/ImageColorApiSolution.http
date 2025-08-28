@@ -1,0 +1,6 @@
+@ImageColorApiSolution_HostAddress = http://localhost:5037
+
+GET {{ImageColorApiSolution_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
