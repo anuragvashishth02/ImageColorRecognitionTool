@@ -19,12 +19,12 @@ namespace YourNamespace.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest(new { message = "No file uploaded" });
 
-            // ✅ Uploads folder ensure karo
+            //  Uploads folder 
             var uploadsFolder = Path.Combine(_env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), "Uploads");
             if (!Directory.Exists(uploadsFolder))
                 Directory.CreateDirectory(uploadsFolder);
 
-            // ✅ Unique filename
+            //  Unique filename
             var fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
             var filePath = Path.Combine(uploadsFolder, fileName);
 
@@ -33,7 +33,7 @@ namespace YourNamespace.Controllers
                 await file.CopyToAsync(stream);
             }
 
-            // ✅ Image URL generate (accessible via /Uploads)
+            //  Image URL generate 
             var imageUrl = $"{Request.Scheme}://{Request.Host}/Uploads/{fileName}";
 
             return Ok(new { fileName, imageUrl });
